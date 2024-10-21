@@ -1,101 +1,162 @@
-import Image from "next/image";
+'use client';
+
+import { useQuery, gql } from '@apollo/client';
+import client from '@/lib/appolloClient';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+
+// Define GraphQL query
+const GET_PRODUCTS = gql`
+  query GetProducts {
+    products(first: 6) {
+      edges {
+        node {
+          id
+          title
+          description
+          priceRange {
+            minVariantPrice {
+              amount
+            }
+          }
+          images(first: 1) {
+            edges {
+              node {
+                originalSrc
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+}
+
+const ProductCard = ({ product }: { product: Product }) => {
+  const ref = useRef(null);
+
+  return (
+    <motion.div
+      ref={ref}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <Card className="w-[300px]">
+        <CardHeader>
+          <CardTitle>{product.title}</CardTitle>
+          <CardDescription>{product.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <img
+              src={product.image}
+              alt={product.title}
+              className="w-full h-[200px] object-cover"
+            />
+          </motion.div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <span>${product.price}</span>
+          <Button>Add to Cart</Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  );
+};
+
+const ProductSection = ({
+  title,
+  products,
+}: {
+  title: string;
+  products: Product[];
+}) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
+
+  return (
+    <motion.section ref={ref} style={{ opacity, scale }} className="my-10">
+      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <div className="flex overflow-x-auto space-x-4 pb-4">
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </motion.section>
+  );
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const { loading, error, data } = useQuery(GET_PRODUCTS, {
+    client,
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  if (loading) return <h1>Loading...</h1>;
+  if (error) {
+    console.error('Error fetching product data:', error);
+    return <h1>Failed to load product data</h1>;
+  }
+
+  const products: Product[] = data.products.edges.map(({ node }: any) => ({
+    id: node.id,
+    title: node.title,
+    description: node.description,
+    price: parseFloat(node.priceRange.minVariantPrice.amount),
+    image:
+      node.images.edges[0]?.node.originalSrc ||
+      'https://via.placeholder.com/300x200?text=No+Image',
+  }));
+
+  const newArrivals = products.slice(0, 3);
+  const topSellers = products.slice(3, 6);
+
+  return (
+    <div className="bg-background text-foreground">
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="h-screen bg-gray-900 flex items-center justify-center"
+      >
+        <motion.h1
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="text-6xl font-bold text-white"
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          Welcome to Our Watch Store
+        </motion.h1>
+      </motion.div>
+      <div className="container mx-auto px-4">
+        <ProductSection title="New Arrivals" products={newArrivals} />
+        <ProductSection title="Top Sellers" products={topSellers} />
+      </div>
     </div>
   );
 }
