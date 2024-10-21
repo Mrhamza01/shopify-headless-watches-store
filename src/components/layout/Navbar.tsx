@@ -1,18 +1,19 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { CartIcon } from '../cart/CartIcon'
-import { AccountIcon } from '../account/AccountIcon'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { CartIcon } from '../cart/CartIcon';
+import { AccountIcon } from '../account/AccountIcon';
+import { CartDrawer } from '../cart/CartDrawer';
 
 const navItems = [
   { name: 'Home', href: '/' },
   { name: 'Shop', href: '/shop' },
   { name: 'Categories', href: '/categories' },
-]
+];
 
 export const Navbar = () => {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <nav className="bg-white shadow-md">
@@ -21,11 +22,13 @@ export const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
-                <span className="text-2xl font-bold text-gray-800">Luxury Timepieces</span>
+                <span className="text-2xl font-bold text-gray-800">
+                  Luxury Timepieces
+                </span>
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -42,10 +45,11 @@ export const Navbar = () => {
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <CartIcon />
+            <CartDrawer />
             <AccountIcon />
           </div>
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};

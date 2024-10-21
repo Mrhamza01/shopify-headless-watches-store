@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shopify Headless Watches Store
 
-## Getting Started
+This repository contains a **Shopify Headless Store** built for showcasing watches. It is designed with cutting-edge web technologies to deliver a fast, scalable, and customizable e-commerce experience using the **Shopify Storefront GraphQL API**.
 
-First, run the development server:
+## Table of Contents
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [Tech Stack](#tech-stack)
+- [Features](#features)
+- [Setup and Installation](#setup-and-installation)
+- [Folder Structure](#folder-structure)
+- [Environment Variables](#environment-variables)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The project leverages the following technologies and frameworks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **[Next.js](https://nextjs.org/)**: Framework for server-side rendering and static site generation, improving SEO and performance.
+- **[TypeScript](https://www.typescriptlang.org/)**: Provides static typing to ensure code quality and reduce runtime errors.
+- **[React](https://reactjs.org/)**: JavaScript library for building interactive and dynamic user interfaces.
+- **[ShadCN](https://shadcn.dev/)**: For easily building UI components with React and CSS-in-JS.
+- **[Tailwind CSS](https://tailwindcss.com/)**: Utility-first CSS framework that enables rapid UI development.
+- **[Zustand](https://zustand-demo.pmnd.rs/)**: Lightweight state management library for managing global application state.
+- **[Apollo Client](https://www.apollographql.com/docs/react/)**: GraphQL client used to efficiently manage data fetching and state.
+- **[Shopify Storefront GraphQL API](https://shopify.dev/docs/storefront-api)**: Used to fetch product data, collections, inventory, and other e-commerce operations directly from Shopify.
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- **Headless Architecture**: Full control over the frontend design and functionality without being restricted by Shopify's default theme structure.
+- **Dynamic Product Display**: Retrieves real-time data from the Shopify Storefront GraphQL API, displaying watches and collections dynamically.
+- **SSR and SSG**: Leverages Next.js for server-side rendering (SSR) and static site generation (SSG) to improve performance and SEO.
+- **Responsive UI**: Styled using Tailwind CSS and ShadCN for a seamless and mobile-friendly user experience.
+- **State Management**: Manages global application state efficiently using Zustand.
+- **Optimized Performance**: Built with performance in mind to ensure fast page load times and minimal bundle size.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Setup and Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Follow these steps to set up the project on your local machine:
 
-## Deploy on Vercel
+### Prerequisites
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Node.js**: Ensure you have Node.js installed (version 14.x or later).
+- **Shopify Store**: A Shopify store with API access enabled (create a private app for API keys).
+- **Git**: Version control to clone this repository.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Installation
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/your-username/shopify-headless-watches-store.git
+   cd shopify-headless-watches-store

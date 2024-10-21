@@ -52,7 +52,7 @@ export const CartDrawer = () => {
                     <div>
                       <div className="flex justify-between text-base font-medium text-gray-900">
                         <h3>{item.title}</h3>
-                        <p className="ml-4">{formatPrice(String(item.price * item.quantity))}</p>
+                        <p className="ml-4">{formatPrice((item.price * item.quantity))}</p>
                       </div>
                     </div>
                     <div className="flex flex-1 items-end justify-between text-sm">
