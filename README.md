@@ -39,7 +39,7 @@ The project leverages the following technologies and frameworks:
 
 Follow these steps to set up the project on your local machine:
 
-### Prerequisites
+### Prerequisitesw
 
 - **Node.js**: Ensure you have Node.js installed (version 14.x or later).
 - **Shopify Store**: A Shopify store with API access enabled (create a private app for API keys).
