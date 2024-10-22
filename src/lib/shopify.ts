@@ -44,19 +44,10 @@ export async function getProductByHandle(handle: string) {
           title
           description
           handle
-          priceRange {
-            minVariantPrice {
-              amount
-              currencyCode
-            }
-          }
-          images(first: 5) {
-            edges {
-              node {
-                originalSrc
-                altText
-              }
-            }
+          options {
+            id
+            name
+            values
           }
           variants(first: 100) {
             edges {
@@ -68,6 +59,22 @@ export async function getProductByHandle(handle: string) {
                   currencyCode
                 }
                 availableForSale
+                selectedOptions {
+                  name
+                  value
+                }
+                image {
+                  originalSrc
+                  altText
+                }
+              }
+            }
+          }
+          images(first: 20) {
+            edges {
+              node {
+                originalSrc
+                altText
               }
             }
           }
@@ -120,13 +127,26 @@ export async function getProductsByCategory(category: string, first: number = 10
 export async function createCheckout(lineItems: any[]) {
   const { data } = await client.mutate({
     mutation: gql`
-      mutation CreateCheckout($input: CheckoutCreateInput!) {
-        checkoutCreate(input: $input) {
-          checkout {
+      mutation CartCreate($input: CartInput!) {
+        cartCreate(input: $input) {
+          cart {
             id
-            webUrl
+            checkoutUrl
+            lines(first: 10) {
+              edges {
+                node {
+                  id
+                  quantity
+                  merchandise {
+                    ... on ProductVariant {
+                      id
+                    }
+                  }
+                }
+              }
+            }
           }
-          checkoutUserErrors {
+          userErrors {
             field
             message
           }
@@ -135,14 +155,19 @@ export async function createCheckout(lineItems: any[]) {
     `,
     variables: {
       input: {
-        lineItems,
-      },
+        lines: lineItems.map(item => ({
+          quantity: item.quantity,
+          merchandiseId: item.variantId
+        }))
+      }
     },
-  })
+  });
 
-  return data.checkoutCreate.checkout
+  return {
+    id: data.cartCreate.cart.id,
+    webUrl: data.cartCreate.cart.checkoutUrl
+  };
 }
-
 
 export async function getCategories() {
   const { data } = await client.query({

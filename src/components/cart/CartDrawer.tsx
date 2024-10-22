@@ -11,16 +11,15 @@ export const CartDrawer = () => {
   const { isOpen, toggleCart, items, removeItem, updateQuantity } = useCartStore()
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
-
   const handleCheckout = async () => {
     const lineItems = items.map(item => ({
       variantId: item.id,
       quantity: item.quantity,
     }))
-
+  
     try {
       const checkout = await createCheckout(lineItems)
-      window.location.href = checkout.webUrl
+      window.location.href = checkout.webUrl // This will now use checkoutUrl from the cart
     } catch (error) {
       console.error('Error creating checkout:', error)
     }

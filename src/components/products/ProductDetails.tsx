@@ -1,28 +1,101 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCartStore } from '@/lib/store/cartStore'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
+
+interface Variant {
+  id: string
+  title: string
+  price: {
+    amount: string
+    currencyCode: string
+  }
+  availableForSale: boolean
+  selectedOptions: {
+    name: string
+    value: string
+  }[]
+  image: {
+    originalSrc: string
+    altText: string
+  }
+}
 
 interface ProductDetailsProps {
-  product: any // Type this properly based on your Shopify product structure
+  product: {
+    id: string
+    title: string
+    description: string
+    options: {
+      id: string
+      name: string
+      values: string[]
+    }[]
+    variants: {
+      edges: {
+        node: Variant
+      }[]
+    }
+    images: {
+      edges: {
+        node: {
+          originalSrc: string
+          altText: string
+        }
+      }[]
+    }
+  }
 }
 
 export const ProductDetails = ({ product }: ProductDetailsProps) => {
-  const [selectedVariant, setSelectedVariant] = useState(product.variants.edges[0].node)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
+  const [mainImage, setMainImage] = useState(product.images.edges[0].node.originalSrc)
   const { addItem } = useCartStore()
 
-  const handleAddToCart = () => {
-    addItem({
-      id: selectedVariant.id,
-      title: product.title,
-      price: parseFloat(selectedVariant.price),
-      quantity: 1,
-      image: product.images.edges[0].node.originalSrc,
+  useEffect(() => {
+    // Initialize selected options with the first available option for each type
+    const initialOptions: Record<string, string> = {}
+    product.options.forEach(option => {
+      initialOptions[option.name] = option.values[0]
     })
+    setSelectedOptions(initialOptions)
+  }, [product.options])
+
+  useEffect(() => {
+    // Find the variant that matches the selected options
+    const matchingVariant = product.variants.edges.find(({ node }) => 
+      node.selectedOptions.every(option => 
+        selectedOptions[option.name] === option.value
+      )
+    )?.node || null
+
+    setSelectedVariant(matchingVariant)
+    if (matchingVariant && matchingVariant.image) {
+      setMainImage(matchingVariant.image.originalSrc)
+    }
+  }, [selectedOptions, product.variants.edges])
+
+  const handleOptionChange = (optionName: string, value: string) => {
+    setSelectedOptions(prev => ({ ...prev, [optionName]: value }))
+  }
+
+  const handleAddToCart = () => {
+    if (selectedVariant) {
+      addItem({
+        id: selectedVariant.id,
+        title: `${product.title} - ${selectedVariant.title}`,
+        price: parseFloat(selectedVariant.price.amount),
+        quantity: 1,
+        image: selectedVariant.image.originalSrc,
+        variantTitle: selectedVariant.title,
+      })
+    }
   }
 
   return (
@@ -32,11 +105,15 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
         <div className="flex flex-col-reverse">
           <div className="hidden mt-6 w-full max-w-2xl mx-auto sm:block lg:max-w-none">
             <div className="grid grid-cols-4 gap-6">
-              {product.images.edges.map((image: any, index: number) => (
-                <div key={index} className="relative h-24 bg-white rounded-md flex items-center justify-center text-sm font-medium uppercase text-gray-900 cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring focus:ring-offset-4 focus:ring-opacity-50">
+              {product.images.edges.map(({ node }, index) => (
+                <div
+                  key={index}
+                  className="relative h-24 bg-white rounded-md flex items-center justify-center text-sm font-medium uppercase text-gray-900 cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring focus:ring-offset-4 focus:ring-opacity-50"
+                  onClick={() => setMainImage(node.originalSrc)}
+                >
                   <Image
-                    src={image.node.originalSrc}
-                    alt={image.node.altText || product.title}
+                    src={node.originalSrc}
+                    alt={node.altText || product.title}
                     width={96}
                     height={96}
                     className="rounded-md"
@@ -48,8 +125,8 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
           <div className="w-full aspect-w-1 aspect-h-1">
             <Image
-              src={product.images.edges[0].node.originalSrc}
-              alt={product.images.edges[0].node.altText || product.title}
+              src={mainImage}
+              alt={product.title}
               width={600}
               height={600}
               className="w-full h-full object-center object-cover sm:rounded-lg"
@@ -63,7 +140,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
           <div className="mt-3">
             <h2 className="sr-only">Product information</h2>
-            <p className="text-3xl text-gray-900">{formatPrice(selectedVariant.price.amount)}</p>
+            <p className="text-3xl text-gray-900">
+              {selectedVariant ? formatPrice(selectedVariant.price.amount) : 'Price varies'}
+            </p>
           </div>
 
           <div className="mt-6">
@@ -72,26 +151,37 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           </div>
 
           <div className="mt-6">
-            <div className="flex items-center">
-              <h3 className="text-sm text-gray-600 font-medium">Variant</h3>
-              <Select onValueChange={(value) => setSelectedVariant(product.variants.edges.find((v: any) => v.node.id === value).node)}>
-                <SelectTrigger className="w-[180px] ml-3">
-                  <SelectValue placeholder="Select a variant" />
-                </SelectTrigger>
-                <SelectContent>
-                  {product.variants.edges.map((variant: any) => (
-                    <SelectItem key={variant.node.id} value={variant.node.id}>
-                      {variant.node.title}
-                    </SelectItem>
+            {product.options.map((option) => (
+              <div key={option.id} className="mb-4">
+                <Label className="text-sm text-gray-600 font-medium mb-2">{option.name}</Label>
+                <RadioGroup
+                  defaultValue={selectedOptions[option.name]}
+                  onValueChange={(value) => handleOptionChange(option.name, value)}
+                  className="flex flex-wrap gap-2"
+                >
+                  {option.values.map((value) => (
+                    <div key={value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={value} id={`${option.name}-${value}`} className="sr-only peer" />
+                      <Label
+                        htmlFor={`${option.name}-${value}`}
+                        className="flex items-center justify-center px-3 py-2 text-sm font-medium uppercase bg-white border rounded-md cursor-pointer peer-data-[state=checked]:bg-indigo-600 peer-data-[state=checked]:text-white hover:bg-gray-50 peer-data-[state=checked]:hover:bg-indigo-700"
+                      >
+                        {value}
+                      </Label>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </RadioGroup>
+              </div>
+            ))}
           </div>
 
           <div className="mt-10 flex sm:flex-col1">
-            <Button onClick={handleAddToCart} className="max-w-xs flex-1 bg-indigo-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-indigo-500 sm:w-full">
-              Add to bag
+            <Button
+              onClick={handleAddToCart}
+              disabled={!selectedVariant || !selectedVariant.availableForSale}
+              className="max-w-xs flex-1 bg-indigo-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-indigo-500 sm:w-full"
+            >
+              {selectedVariant && selectedVariant.availableForSale ? 'Add to bag' : 'Out of stock'}
             </Button>
           </div>
         </div>
