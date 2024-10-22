@@ -6,9 +6,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { createCheckout } from '@/lib/shopify'
+import { useRouter } from 'next/navigation'
 
 export const CartDrawer = () => {
   const { isOpen, toggleCart, items, removeItem, updateQuantity } = useCartStore()
+  const router = useRouter()
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
   const handleCheckout = async () => {
@@ -19,7 +21,9 @@ export const CartDrawer = () => {
   
     try {
       const checkout = await createCheckout(lineItems)
-      window.location.href = checkout.webUrl // This will now use checkoutUrl from the cart
+      // window.location.href = checkout.webUrl // This will now use checkoutUrl from the cart
+      router.push('/checkout')
+
     } catch (error) {
       console.error('Error creating checkout:', error)
     }
